@@ -1,5 +1,5 @@
 # VoiceAssistant
-I'm trying to build a voice assistant which listens to your voice commands via microphone , analyses it and replies
+I'm trying to build a voice assistant which listens to your voice commands via microphone , analyses it and replies.
 
 ## The modules I will be using are:<br>
 <br>
