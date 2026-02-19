@@ -1,6 +1,7 @@
 import speech_recognition as sr
 import webbrowser
 import pyttsx3
+import musicLibrary
 
 #n=input("Enter name of assistant: ")   #taking the name from the user
 name = 'Jarvis'   #name of the assistant
@@ -39,6 +40,12 @@ def processCommand(command):
         webbrowser.open("https://www.instagram.com")
     elif "open linkedin" in command:
         webbrowser.open("https://www.linkedin.com")
+    elif "open github" in command:
+        webbrowser.open("https://www.github.com")
+    elif command.lower().startswith("play"):
+        song = command.lower().split(" ",1)[1]
+        link = musicLibrary.music[song]
+        webbrowser.open(link)
     print(f"User: {command}")
 
 
