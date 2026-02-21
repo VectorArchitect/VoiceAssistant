@@ -2,13 +2,14 @@ import speech_recognition as sr
 import webbrowser
 import pyttsx3
 import musicLibrary
+import requests
 
 #n=input("Enter name of assistant: ")   #taking the name from the user
 name = 'Jarvis'   #name of the assistant
 
 recognizer = sr.Recognizer()   #creating a recognizer object to recognize the voice
 engine = pyttsx3.init()          #creating an engine object of pyttsx3 to convert text to speech 
-
+newsapi="xxxxxx"   #news api key
 
 
 
@@ -46,6 +47,17 @@ def processCommand(command):
         song = command.lower().split(" ",1)[1]
         link = musicLibrary.music[song]
         webbrowser.open(link)
+    elif "news" in command:
+        r=requests.get(f"https://newsapi.org/v2/top-headlines?country=us&apiKey={newsapi}")
+        if r.status_code == 200:
+            data =r.json()
+            articles = data.get("articles", [])
+            for article in articles:
+                title = article.get("title", "No Title")
+                speak({title})
+                print(f"News: {title}")
+                
+
     print(f"User: {command}")
 
 
@@ -83,7 +95,7 @@ if __name__=="__main__":
                         print("User: "+command)
                         
                         if command.lower()=="stop" or command.lower()=="exit" or command.lower()=="quit" or command.lower()=="stop stop":
-                            print("User: "+command)
+                            # print("User: "+command)
                             speak("Goodbye!")
                             print("Goodbye!")
                             #break
