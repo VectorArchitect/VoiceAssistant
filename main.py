@@ -14,7 +14,7 @@ name = 'Jarvis'   #name of the assistant
 
 recognizer = sr.Recognizer()   #creating a recognizer object to recognize the voice
 engine = pyttsx3.init()          #creating an engine object of pyttsx3 to convert text to speech 
-newsapi="18242c5985584646a86eb36490c4bb1d"   #news api key
+newsapi="xxxxxxxxxxxxx"   #news api key
 def speak(text):
     engine.say(text)           #saying the text
     engine.runAndWait()         #running the engine to say the text and it will wait until the speech is finished before moving on to the next command
@@ -214,3 +214,4 @@ if __name__=="__main__":
             print("Could not understand audio")
         except Exception as e:                               #this exception is for any other error that may occur while
             print(f"Error: {e}")
+
