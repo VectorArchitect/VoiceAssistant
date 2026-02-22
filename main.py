@@ -14,7 +14,7 @@ name = 'Jarvis'   #name of the assistant
 
 recognizer = sr.Recognizer()   #creating a recognizer object to recognize the voice
 engine = pyttsx3.init()          #creating an engine object of pyttsx3 to convert text to speech 
-newsapi="18242c5985584646a86eb36490c4bb1d"   #news api key
+newsapi="xxxxxxxxxx"   #news api key
 def speak(text):
     engine.say(text)           #saying the text
     engine.runAndWait()         #running the engine to say the text and it will wait until the speech is finished before moving on to the next command
