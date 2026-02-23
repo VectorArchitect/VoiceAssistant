@@ -1,9 +1,12 @@
 import time
+# from xmlrpc import client
 import speech_recognition as sr
 import webbrowser
 import pyttsx3
 import musicLibrary
 import requests
+from google import genai
+import os
 
 
 
@@ -14,10 +17,40 @@ name = 'Jarvis'   #name of the assistant
 
 recognizer = sr.Recognizer()   #creating a recognizer object to recognize the voice
 engine = pyttsx3.init()          #creating an engine object of pyttsx3 to convert text to speech 
-newsapi="xxxxxxxxxx"   #news api key
+
+#API keys
+newsapi="xxxxxxxxxxxxxx"   #news api key    #Account-savinavsharma
+gemini_api_key = "xxxxxxxxxxxxxxxxxxxxx"   #Google Gemini API key # account-VectorArchitect0
+
+client = genai.Client(api_key=gemini_api_key)
+
 def speak(text):
+    print(f"Assistant is saying: {text}") #debug line to show what assistant is saying in the console, jisse aapko pata chalega ki assistant kya bol raha hai
     engine.say(text)           #saying the text
     engine.runAndWait()         #running the engine to say the text and it will wait until the speech is finished before moving on to the next command
+    engine.stop()               #stopping the engine after saying the text, jisse agar koi aur command aati hai to assistant usko turant sun sake without waiting for the previous speech to finish
+
+#AI process function to get response from google gemini
+def aiProcess(prompt):
+    response = client.chat.send_message(
+        model="gemini-2.0-flash",
+        content=[
+            {"role": "user", "content": prompt}
+        ]
+    )
+    return response.text
+
+def aiProcess(command):
+    response = client.models.generate_content(
+        model="gemini-3-flash-preview", contents=command
+    )
+    answer = response.text
+    print(f"{name}: {answer}")
+    # speak(answer.text)
+    # response = client.models.generate_content_stream(
+    # for chunk in response:
+    #     print(f"{name}: "+chunk.text, end="", flush=True)
+    #     speak(chunk.text)
 
 #country for news
 country = {
@@ -52,7 +85,9 @@ def processCommand(command):
         print("- Open X")
         print("- Open Instagram")
         speak("Available commands are: Open Google, Open YouTube, Open Facebook, Open Twitter, Open X, and Open Instagram.")
-                        
+
+    elif "open brave" in command:
+        webbrowser.open("https://search.brave.com/?lang=en-in")
     elif "open google" in command:
         webbrowser.open("https://www.google.com")
         # with sr.Microphone() as source:
@@ -62,12 +97,15 @@ def processCommand(command):
         #             webbrowser.open(f"https://www.google.com/search?q={search_query}")
     elif "open youtube" in command:
         webbrowser.open("https://www.youtube.com")
-        # with sr.Microphone() as source:
-        #             print(f"{name} active, Listening... say what to search on youtube")
-        #             command = recognizer.listen(source)   #listning to the user
-        # if "search for" in command:
-        #     search_query = command.split("search for")[-1].strip()
-        #     webbrowser.open(f"https://www.youtube.com/results?search_query={search_query}")
+    # 
+    ###################SEARCH ON YOUTUBE#################
+    # 
+    # elif "search" in command and "youtube" in command:
+    #     with sr.Microphone() as source:
+    #                 print(f"{name} active, Listening... say what to search on youtube")
+    #                 command = recognizer.listen(source)   #listning to the user
+    #                 search_query = command #.split("search for")[-1].strip()
+    #                 webbrowser.open(f"https://www.youtube.com/results?search_query={search_query}")
     elif "open facebook" in command:
         webbrowser.open("https://www.facebook.com")
     elif "open twitter" in command:
@@ -83,11 +121,17 @@ def processCommand(command):
     elif command.lower().startswith("play"):
         song = command.lower().split(" ",1)[1]
         link = musicLibrary.music[song]
-        webbrowser.open(link)
-     ############
+        if link:
+            webbrowser.open(link)
+        else:
+            speak("Sorry, I don't have that song in my library.")
+     
+     
+     ############ NEWS API ############
     elif "news" in command.lower():
         # detect genre
         matched_genre = next((g for g in categories if g in command.lower()), None)
+        matched_query = next((k for k in keywords if k in command.lower()), None)
         
         # detect country
         matched_country = "us"  # default
@@ -96,68 +140,37 @@ def processCommand(command):
                 matched_country = country_code
                 break
 
-    # build correct URL
-    if "bitcoin" in command.lower():
-        url = f"https://newsapi.org/v2/top-headlines?q=bitcoin&country={matched_country}&apiKey={newsapi}"
-    elif matched_genre:
-        url = f"https://newsapi.org/v2/top-headlines?category={matched_genre}&country={matched_country}&apiKey={newsapi}"
+        # build correct URL
+        if matched_query:
+            url = f"https://newsapi.org/v2/top-headlines?q={matched_query}&country={matched_country}&apiKey={newsapi}"
+        elif matched_genre:
+            url = f"https://newsapi.org/v2/top-headlines?category={matched_genre}&country={matched_country}&apiKey={newsapi}"
+        else:
+            url = f"https://newsapi.org/v2/top-headlines?country={matched_country}&apiKey={newsapi}"
+
+        print(f"Fetching news: {url}")  # debug - so you can see what URL is called
+        
+        r = requests.get(url)
+        if r.status_code == 200:
+            articles = r.json().get("articles", [])
+            if not articles:
+                speak("Sorry, no news found.")
+            else:
+                speak(f"Here are the top news headlines for {matched_country.upper()}:") 
+                for article in articles[:3]:  # read top 3 articles
+                    title = article.get("title", "No Title")
+                    clean_title = title.split("-")[0].strip()  # remove source if present
+                    print(f"News: {clean_title}")
+                    speak(clean_title)
+        else:
+            print(f"API Error: {r.status_code}")
+            speak("Sorry, I could not fetch the news.")
+
+    #############################  USING GOOGLE GEMINI TO ANSWER QUESTIONS  #############################
     else:
-        url = f"https://newsapi.org/v2/top-headlines?country={matched_country}&apiKey={newsapi}"
-
-    print(f"Fetching news: {url}")  # debug - so you can see what URL is called
-    
-    r = requests.get(url)
-    if r.status_code == 200:
-        articles = r.json().get("articles", [])
-        if not articles:
-            speak("Sorry, no news found.")
-        for article in articles:
-            title = article.get("title", "No Title")
-            print(f"News: {title}")
-            speak(title)
-    else:
-        print(f"API Error: {r.status_code}")
-        speak("Sorry, I could not fetch the news.")
-     ############
-    # elif "news" in command.lower():
-    #     r=requests.get(f"https://newsapi.org/v2/top-headlines?country=us&apiKey={newsapi}")
-    #     if r.status_code == 200:      #checks if the request was successful (status code 200 means OK)
-    #         data =r.json()            #parses the JSON response from the API and converts raw data into a Python dictionary. The resulting dictionary is stored in the variable data.
-    #         articles = data.get("articles", [])   #retrieves the value associated with the key "articles" from the data dictionary. If the key "articles" does not exist, it returns an empty list [] as a default value. The resulting list of articles is stored in the variable articles.
-    #         for article in articles:
-    #             title = article.get("title", "No Title")    #retrieves the value associated with the key "title" from each article dictionary. If the key "title" does not exist, it returns the string "No Title" as a default value. The resulting title of each article is stored in the variable title.
-    #             speak(title)
-    #             print(f"News: {title}")
-    #             speak("Next news...")
-    # elif "news" in command.lower() and "bitcoin" in command.lower():
-    #     r = requests.get(f"https://newsapi.org/v2/top-headlines?q=bitcoin&apiKey={newsapi}")
-    #     if r.status_code == 200:      #checks if the request was successful (status code 200 means OK)
-    #         data =r.json()            #parses the JSON response from the API and converts raw data into a Python dictionary. The resulting dictionary is stored in the variable data.
-    #         articles = data.get("articles", [])   #retrieves the value associated with the key "articles" from the data dictionary. If the key "articles" does not exist, it returns an empty list [] as a default value. The resulting list of articles is stored in the variable articles.
-    #         for article in articles:
-    #             title = article.get("title", "No Title")    #retrieves the value associated with the key "title" from each article dictionary. If the key "title" does not exist, it returns the string "No Title" as a default value. The resulting title of each article is stored in the variable title.
-    #             speak(title)
-    #             print(f"News: {title}")
-    # elif "news" in command.lower() and "technology" in command.lower() and "tech" in command.lower():
-    #     r=requests.get(f"https://newsapi.org/v2/top-headlines?q=technology&apiKey={newsapi}")
-    #     if r.status_code == 200:      #checks if the request was successful (status code 200 means OK)
-    #         data =r.json()            #parses the JSON response from the API and converts raw data into a Python dictionary. The resulting dictionary is stored in the variable data.
-    #         articles = data.get("articles", [])   #retrieves the value associated with the key "articles" from the data dictionary. If the key "articles" does not exist, it returns an empty list [] as a default value. The resulting list of articles is stored in the variable articles.
-    #         for article in articles:
-    #             title = article.get("title", "No Title")    #retrieves the value associated with the key "title" from each article dictionary. If the key "title" does not exist, it returns the string "No Title" as a default value. The resulting title of each article is stored in the variable title.
-    #             speak(title)
-    #             print(f"News: {title}")  
-    # elif "news" in command and "sports" in command:
-    #     r=requests.get(f"https://newsapi.org/v2/top-headlines?q=sports&apiKey={newsapi}")
-    #     if r.status_code == 200:      #checks if the request was successful (status code 200 means OK)
-    #         data =r.json()            #parses the JSON response from the API and converts raw data into a Python dictionary. The resulting dictionary is stored in the variable data.
-    #         articles = data.get("articles", [])   #retrieves the value associated with the key "articles" from the data dictionary. If the key "articles" does not exist, it returns an empty list [] as a default value. The resulting list of articles is stored in the variable articles.
-    #         for article in articles:
-    #             #title = article.get("title", "No Title")    #retrieves the value associated with the key "title" from each article dictionary. If the key "title" does not exist, it returns the string "No Title" as a default value. The resulting title of each article is stored in the variable title.
-    #             print(f"News: {article['title']}")
-    #             speak(article["title"])              
-
-
+        output=aiProcess(command)
+        speak(output)
+#######################################################################################################################################################
 
 if __name__=="__main__":
     print(f"Say {name} to activate assistant.")
@@ -197,10 +210,11 @@ if __name__=="__main__":
                         print(f"Error: {e}")
                         continue
             else:
-                with sr.Microphone() as source:
-                    audio = recognizer.listen(source, timeout=2, phrase_time_limit=5)   #listning to the user
-                print(f"{name} is not active, Listening...")
-                command = recognizer.recognize_google(audio).lower()
+                continue
+                # with sr.Microphone() as source:
+                #     audio = recognizer.listen(source, timeout=2, phrase_time_limit=5)   #listning to the user
+                # print(f"{name} is not active, Listening...")
+                # command = recognizer.recognize_google(audio).lower()
             if command.lower()=="stop" or command.lower()=="exit" or command.lower()=="quit" or command.lower()=="stop stop":
                             print("User: "+command)
                             speak("Goodbye!")
