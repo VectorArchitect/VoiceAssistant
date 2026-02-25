@@ -8,8 +8,8 @@ I'm trying to build a voice assistant which listens to your voice commands via m
   -pyAudio             &emsp;&emsp;&emsp;&emsp;&emsp;&emsp;&ensp;  # Gives out the audio via the speaker of the device<br>
   -setuptools          &emsp;&emsp;  <br>
   -webbrowser          &emsp;&emsp;  <br>
-  -NewsAPI.org         &emsp;&emsp;   # News API
-  -google-genai        &emsp;&emsp;   # Gemini API 
-  -requests            &emsp;&emsp;   # To fetch data from APIs
+  -NewsAPI.org         &emsp;&emsp;   # News API <br>
+  -google-genai        &emsp;&emsp;   # Gemini API <br>
+  -requests            &emsp;&emsp;   # To fetch data from APIs <br>
 
   
