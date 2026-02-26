@@ -12,7 +12,7 @@ import os
 
 
 
-#n=input("Enter name of assistant: ")   #taking the name from the user
+#name=input("Enter name of assistant: ")   #taking the name from the user
 name = 'Jarvis'   #name of the assistant
 
 recognizer = sr.Recognizer()   #creating a recognizer object to recognize the voice
@@ -228,3 +228,4 @@ if __name__=="__main__":
             print("Could not understand audio")
         except Exception as e:                               #this exception is for any other error that may occur while
             print(f"Error: {e}")
+
