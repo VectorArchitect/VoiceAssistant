@@ -7,6 +7,7 @@ import musicLibrary
 import requests
 from google import genai
 import os
+from ai_service import generate_answer
 
 
 
@@ -30,27 +31,11 @@ def speak(text):
     engine.runAndWait()         #running the engine to say the text and it will wait until the speech is finished before moving on to the next command
     engine.stop()               #stopping the engine after saying the text, jisse agar koi aur command aati hai to assistant usko turant sun sake without waiting for the previous speech to finish
 
-#AI process function to get response from google gemini
-def aiProcess(prompt):
-    response = client.chat.send_message(
-        model="gemini-2.0-flash",
-        content=[
-            {"role": "user", "content": prompt}
-        ]
-    )
-    return response.text
-
+# Generate a text response from Google Gemini.
 def aiProcess(command):
-    response = client.models.generate_content(
-        model="gemini-3-flash-preview", contents=command
-    )
-    answer = response.text
+    answer = generate_answer(client, command)
     print(f"{name}: {answer}")
-    # speak(answer.text)
-    # response = client.models.generate_content_stream(
-    # for chunk in response:
-    #     print(f"{name}: "+chunk.text, end="", flush=True)
-    #     speak(chunk.text)
+    return answer
 
 #country for news
 country = {
